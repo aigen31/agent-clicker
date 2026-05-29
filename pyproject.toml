@@ -1,0 +1,68 @@
+[project]
+name = "agent-clicker"
+version = "0.1.0"
+description = "AI agent emulating real-user behavior on websites"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "browser-use>=0.12",
+    "langchain-openai>=0.1",
+    "sqlalchemy[asyncio]>=2.0",
+    "asyncpg>=0.29",
+    "alembic>=1.13",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+    "jinja2>=3.1",
+    "python-multipart>=0.0.9",
+    "websockets>=12.0",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.2",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "anyio>=4.3",
+]
+
+[project.scripts]
+agent-clicker = "agent_clicker.__main__:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_clicker"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W", "N", "ASYNC", "S", "PT"]
+ignore = ["S101", "S104", "S311", "B008"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "N"]
+"src/agent_clicker/db/migrations/**" = ["N", "E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = []
+exclude = ["src/agent_clicker/db/migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["browser_use.*", "langchain_openai.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-ra -q"

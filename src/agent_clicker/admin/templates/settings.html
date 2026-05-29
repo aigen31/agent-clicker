@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block body %}
+<h1>Settings</h1>
+<div x-data="settingsPage()" x-init="load()">
+  <template x-for="section in ['agent','browser','worker']" :key="section">
+    <section>
+      <h2 x-text="section"></h2>
+      <textarea rows="14" cols="80" x-model="json[section]"></textarea><br>
+      <button @click="save(section)">Save <span x-text="section"></span></button>
+      <span x-text="status[section]" class="status"></span>
+    </section>
+  </template>
+  <p class="note">Worker concurrency requires service restart to take effect.</p>
+</div>
+{% endblock %}

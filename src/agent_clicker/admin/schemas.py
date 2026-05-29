@@ -1,0 +1,63 @@
+"""Pydantic schemas used by Admin REST API."""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any, Generic, TypeVar
+
+from pydantic import BaseModel
+
+from agent_clicker.domain.task import TaskDTO
+
+T = TypeVar("T")
+
+
+class TaskOut(BaseModel):
+    id: int
+    ad_id: int
+    status: str
+    description: str
+    link: str
+    created_at: datetime | None
+    exec_time: datetime | None
+    attempts: int
+    max_attempts: int
+    last_error: str | None
+    worker_id: str | None
+    locked_at: datetime | None
+    profile: dict[str, Any] | None
+    result: dict[str, Any] | None
+
+    @classmethod
+    def from_dto(cls, dto: TaskDTO) -> "TaskOut":
+        return cls(
+            id=dto.id,
+            ad_id=dto.ad_id,
+            status=dto.status,
+            description=dto.description,
+            link=dto.link,
+            created_at=dto.created_at,
+            exec_time=dto.exec_time,
+            attempts=dto.attempts,
+            max_attempts=dto.max_attempts,
+            last_error=dto.last_error,
+            worker_id=dto.worker_id,
+            locked_at=dto.locked_at,
+            profile=dto.profile,
+            result=dto.result,
+        )
+
+
+class PageOut(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+
+
+class CreateTaskRequest(BaseModel):
+    ad_id: int
+    link: str
+    description: str
+    exec_time: datetime | None = None
+    max_attempts: int | None = None

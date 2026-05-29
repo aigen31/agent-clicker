@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+{% block body %}
+<h1>Live logs</h1>
+<div x-data="logsPage()" x-init="connect()">
+  <div class="filters">
+    <label>Level:
+      <select x-model="level" @change="reconnect()">
+        <option value="">all</option><option>DEBUG</option><option>INFO</option><option>WARNING</option><option>ERROR</option>
+      </select>
+    </label>
+    <label>task_id: <input type="number" x-model="task_id" @change="reconnect()"></label>
+    <label>worker_id: <input x-model="worker_id" @change="reconnect()"></label>
+    <button @click="lines=[]">clear</button>
+  </div>
+  <pre class="logs"><template x-for="l in lines" :key="l.ts+l.msg"><div :class="'lvl-'+l.level"><span x-text="l.ts"></span> [<span x-text="l.level"></span>] <span x-text="l.logger"></span> t=<span x-text="l.task_id||''"></span> w=<span x-text="l.worker_id||''"></span> <span x-text="l.msg"></span></div></template></pre>
+</div>
+{% endblock %}

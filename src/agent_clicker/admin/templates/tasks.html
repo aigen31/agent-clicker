@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Tasks{% endblock %}
+{% block body %}
+<h1>Tasks</h1>
+<div x-data="tasksPage()" x-init="load()">
+  <div class="filters">
+    <label>Status: <input x-model="filters.status" placeholder="created/in_progress/done/failed"></label>
+    <label>ad_id: <input type="number" x-model.number="filters.ad_id"></label>
+    <button @click="load()">Refresh</button>
+  </div>
+  {% if enable_task_mutations %}
+  <details class="create">
+    <summary>+ Create test task</summary>
+    <form @submit.prevent="create()">
+      <input type="number" placeholder="ad_id" x-model.number="newTask.ad_id" required>
+      <input placeholder="link (https://…)" x-model="newTask.link" required>
+      <textarea placeholder="description" x-model="newTask.description" required></textarea>
+      <button>Create</button>
+    </form>
+  </details>
+  {% endif %}
+  <table>
+    <thead><tr>
+      <th>id</th><th>ad_id</th><th>status</th><th>attempts</th><th>link</th><th>created_at</th><th>exec_time</th><th>worker</th><th>last_error</th><th>actions</th>
+    </tr></thead>
+    <tbody>
+      <template x-for="t in tasks" :key="t.id">
+        <tr>
+          <td x-text="t.id"></td>
+          <td x-text="t.ad_id"></td>
+          <td><span class="badge" :class="'st-'+t.status" x-text="t.status"></span></td>
+          <td x-text="t.attempts+'/'+t.max_attempts"></td>
+          <td><a :href="t.link" target="_blank" x-text="t.link.slice(0,60)"></a></td>
+          <td x-text="fmtTs(t.created_at)"></td>
+          <td x-text="fmtTs(t.exec_time)"></td>
+          <td x-text="t.worker_id||''"></td>
+          <td class="err" x-text="(t.last_error||'').slice(0,80)"></td>
+          <td>
+            <button @click="retry(t.id)">retry</button>
+            {% if enable_task_mutations %}
+            <button @click="del(t.id)">delete</button>
+            {% endif %}
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+  <div class="pager">
+    <button @click="prev()" :disabled="page<=1">&laquo;</button>
+    <span x-text="'page '+page+' of '+Math.max(1, Math.ceil(total/page_size))"></span>
+    <button @click="next()" :disabled="page*page_size>=total">&raquo;</button>
+  </div>
+</div>
+{% endblock %}
