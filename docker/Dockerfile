@@ -21,14 +21,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
-COPY src ./src
-COPY alembic.ini ./
-COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh \
- && python -m playwright install --with-deps chromium \
+# Install Chromium first — it only depends on .venv, so source-code changes don't invalidate this expensive layer.
+RUN python -m playwright install --with-deps chromium \
  && mkdir -p /app/artifacts \
  && useradd -m -u 1000 app \
  && chown -R app:app /app /ms-playwright
+COPY src ./src
+COPY alembic.ini ./
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && chown -R app:app /app
 USER app
 ENV ARTIFACTS_DIR=/app/artifacts ADMIN_HOST=0.0.0.0 ADMIN_PORT=8080
 EXPOSE 8080

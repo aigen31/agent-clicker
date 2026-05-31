@@ -27,6 +27,7 @@ class TaskOut(BaseModel):
     locked_at: datetime | None
     profile: dict[str, Any] | None
     result: dict[str, Any] | None
+    cookies_count: int = 0
 
     @classmethod
     def from_dto(cls, dto: TaskDTO) -> "TaskOut":
@@ -45,6 +46,7 @@ class TaskOut(BaseModel):
             locked_at=dto.locked_at,
             profile=dto.profile,
             result=dto.result,
+            cookies_count=len(dto.cookies) if dto.cookies else 0,
         )
 
 
@@ -61,3 +63,5 @@ class CreateTaskRequest(BaseModel):
     description: str
     exec_time: datetime | None = None
     max_attempts: int | None = None
+    # Optional: cookie header string ("k=v; k2=v2") or pre-parsed Playwright cookies.
+    cookies: str | list[dict[str, Any]] | None = None

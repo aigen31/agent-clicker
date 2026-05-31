@@ -72,6 +72,7 @@ async def test_e2e_success_flow(task_repo, settings_store, tmp_path) -> None:
             proxy_pool=proxy_pool,
             profile_factory_builder=build_factory,
             runner=runner,
+            artifact_store=artifacts,
         )
 
     dispatcher = Dispatcher(task_repo, settings_store, queue, poll_interval_seconds=0.1)
@@ -121,6 +122,7 @@ async def test_e2e_failure_retries(task_repo, settings_store, tmp_path) -> None:
             proxy_pool=proxy_pool,
             profile_factory_builder=build_factory,
             runner=runner,
+            artifact_store=artifacts,
         )
 
     dispatcher = Dispatcher(task_repo, settings_store, queue, poll_interval_seconds=0.05)

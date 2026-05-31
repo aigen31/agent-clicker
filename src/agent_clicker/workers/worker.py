@@ -7,10 +7,13 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any, Callable
 
+import json
+
 from agent_clicker.browser.runner import AgentRunner
 from agent_clicker.config import BrowserProfileDefaults
 from agent_clicker.db.repository import TaskRepository
 from agent_clicker.domain.task import TaskDTO, TaskResult
+from agent_clicker.observability.artifacts import ArtifactStore
 from agent_clicker.observability.logging import current_task_id, current_worker_id
 from agent_clicker.profiles.factory import ProfileFactory
 from agent_clicker.proxy.pool import ProxyPool
@@ -33,6 +36,7 @@ class Worker:
         proxy_pool: ProxyPool,
         profile_factory_builder: ProfileFactoryBuilder,
         runner: AgentRunner,
+        artifact_store: ArtifactStore,
     ) -> None:
         self.worker_id = worker_id
         self._queue = in_queue
@@ -41,6 +45,7 @@ class Worker:
         self._proxy_pool = proxy_pool
         self._build_factory = profile_factory_builder
         self._runner = runner
+        self._artifacts = artifact_store
 
     async def run(self) -> None:
         while True:
@@ -62,7 +67,21 @@ class Worker:
             proxy = await self._proxy_pool.acquire(preferred_geo=None)
             spec = factory.build_spec(proxy=proxy)
             profile_audit = spec.to_audit_dict()
-            browser_profile = factory.build_browser_profile(spec)
+            # browser-use's StorageStateWatchdog loads cookies only from a *file path*
+            # (it calls os.path.exists on the value). Materialize the dict to a JSON file
+            # inside the task's artifacts dir and pass the path.
+            storage_state_path: str | None = None
+            if task.cookies:
+                out_dir = self._artifacts.dir_for(task.id)
+                storage_path = out_dir / "storage_state.json"
+                storage_path.write_text(
+                    json.dumps({"cookies": list(task.cookies), "origins": []}, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                storage_state_path = str(storage_path)
+                profile_audit["cookies_count"] = len(task.cookies)
+                profile_audit["storage_state_path"] = storage_state_path
+            browser_profile = factory.build_browser_profile(spec, storage_state=storage_state_path)
 
             run_result = await self._runner.run(
                 task=task,

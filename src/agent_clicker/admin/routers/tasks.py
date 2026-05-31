@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from agent_clicker.admin.dependencies import get_task_repo, require_mutations
 from agent_clicker.admin.schemas import CreateTaskRequest, PageOut, TaskOut
+from agent_clicker.browser.cookies import coerce_cookies
 from agent_clicker.db.repository import TaskRepository
 from agent_clicker.domain.task import TaskFilters
 
@@ -62,6 +63,7 @@ async def create_task(
         description=body.description,
         exec_time=body.exec_time,
         max_attempts=body.max_attempts,
+        cookies=coerce_cookies(body.cookies, url=body.link) or None,
     )
     return TaskOut.from_dto(dto)
 

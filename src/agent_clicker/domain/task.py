@@ -41,6 +41,7 @@ class TaskDTO:
     locked_at: datetime | None = None
     profile: dict[str, Any] | None = None
     result: dict[str, Any] | None = None
+    cookies: list[dict[str, Any]] | None = None
 
 
 class TaskFilters(BaseModel):

@@ -42,5 +42,17 @@ services:
       retries: 5
       start_period: 30s
 
+  uv:
+    image: ghcr.io/astral-sh/uv:python3.11-bookworm
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: >
+      bash -c "uv venv --python 3.11 --clear .venv &&
+               echo 'venv created' &&
+               . .venv/bin/activate &&
+               echo \"Python: $$(python --version)\" &&
+               echo \"uv: $$(uv --version)\""
+
 volumes:
   pgdata: {}

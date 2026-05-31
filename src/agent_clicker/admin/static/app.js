@@ -4,7 +4,7 @@ function tasksPage(){
   return {
     tasks:[], total:0, page:1, page_size:25,
     filters:{ status:'', ad_id:null },
-    newTask:{ ad_id:1, link:'https://example.com', description:'Test task' },
+    newTask:{ ad_id:1, link:'https://example.com', description:'Test task', cookies:'' },
     async load(){
       const params=new URLSearchParams();
       if(this.filters.status) params.set('status', this.filters.status);
@@ -17,8 +17,10 @@ function tasksPage(){
     prev(){ if(this.page>1){ this.page--; this.load(); } },
     fmtTs,
     async create(){
-      const r=await fetch('/api/tasks',{ method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(this.newTask) });
-      if(r.ok){ this.load(); } else { alert('error: '+await r.text()); }
+      const payload={ ad_id:this.newTask.ad_id, link:this.newTask.link, description:this.newTask.description };
+      if(this.newTask.cookies && this.newTask.cookies.trim()) payload.cookies=this.newTask.cookies.trim();
+      const r=await fetch('/api/tasks',{ method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload) });
+      if(r.ok){ this.newTask.cookies=''; this.load(); } else { alert('error: '+await r.text()); }
     },
     async retry(id){ await fetch('/api/tasks/'+id+'/retry',{method:'POST'}); this.load(); },
     async del(id){ if(!confirm('delete '+id+'?')) return; await fetch('/api/tasks/'+id,{method:'DELETE'}); this.load(); },

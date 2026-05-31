@@ -36,7 +36,7 @@ class ProfileFactory:
             proxy=proxy,
         )
 
-    def build_browser_profile(self, spec: ProfileSpec) -> Any:
+    def build_browser_profile(self, spec: ProfileSpec, *, storage_state: Any = None) -> Any:
         """Lazy import to keep tests/CLI independent from browser_use."""
         try:
             from browser_use import BrowserProfile  # type: ignore
@@ -72,4 +72,5 @@ class ProfileFactory:
             cross_origin_iframes=self._defaults.cross_origin_iframes,
             max_iframes=self._defaults.max_iframes,
             proxy=proxy_settings,
+            storage_state=storage_state,
         )

@@ -40,6 +40,7 @@ def _row_to_dto(task: Task, runtime: TaskRuntime | None) -> TaskDTO:
         locked_at=runtime.locked_at if runtime else None,
         profile=runtime.profile if runtime else None,
         result=runtime.result if runtime else None,
+        cookies=runtime.cookies if runtime else None,
     )
 
 
@@ -323,6 +324,7 @@ class TaskRepository:
         description: str,
         exec_time: datetime | None = None,
         max_attempts: int | None = None,
+        cookies: list[dict[str, Any]] | None = None,
     ) -> TaskDTO:
         """**Dev-only**: requires INSERT privilege on tasks. Never call in prod."""
         async with self._ext() as session, session.begin():
@@ -349,6 +351,7 @@ class TaskRepository:
                     task_id=task_id,
                     attempts=0,
                     max_attempts=max_attempts or self._default_max_attempts,
+                    cookies=cookies or None,
                 )
             )
         got = await self.get_task(task_id)

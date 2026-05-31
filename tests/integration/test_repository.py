@@ -71,3 +71,20 @@ async def test_requeue_from_terminal(task_repo) -> None:
     requeued = await task_repo.requeue(leased.id)
     assert requeued.status == TaskStatus.PENDING
     assert requeued.attempts == 0
+
+
+@pytest.mark.asyncio
+async def test_create_task_with_cookies(task_repo) -> None:
+    cookies = [
+        {"name": "sid", "value": "abc", "domain": ".vk.com", "path": "/",
+         "secure": True, "httpOnly": False, "sameSite": "Lax"}
+    ]
+    t = await task_repo.create_task(
+        ad_id=99, link="https://vk.com/im", description="d", cookies=cookies
+    )
+    got = await task_repo.get_task(t.id)
+    assert got is not None
+    assert got.cookies and got.cookies[0]["name"] == "sid"
+
+    [leased] = await task_repo.lease_batch(worker_id="w", batch_size=1, lease_timeout_seconds=600)
+    assert leased.cookies and leased.cookies[0]["value"] == "abc"

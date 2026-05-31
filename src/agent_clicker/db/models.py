@@ -86,6 +86,7 @@ class TaskRuntime(InternalBase):
     locked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=False), nullable=True)
     profile: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     result: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    cookies: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), onupdate=func.now(), nullable=False
     )

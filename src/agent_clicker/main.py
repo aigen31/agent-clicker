@@ -123,6 +123,7 @@ async def run() -> None:
             proxy_pool=proxy_pool,
             profile_factory_builder=build_factory,
             runner=runner,
+            artifact_store=artifact_store,
         )
 
     dispatcher = Dispatcher(task_repo, settings_store, queue)
