@@ -27,12 +27,13 @@ services:
       EXTERNAL_TASKS_DSN: postgresql+asyncpg://agent:agent@postgres:5432/agent_clicker
       INTERNAL_STATE_DSN: postgresql+asyncpg://agent:agent@postgres:5432/agent_clicker
       ADMIN_HOST: 0.0.0.0
+      ADMIN_PORT: "8080"
+      ADMIN_ALLOW_PUBLIC: "true"
     ports:
       - "127.0.0.1:8080:8080"
     volumes:
       - ./artifacts:/app/artifacts
     shm_size: "1gb"
-    init: true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]

@@ -5,9 +5,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
  && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir uv
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src ./src
-RUN uv venv && uv pip install --no-cache .
+RUN uv sync --frozen --no-dev
 
 # --- runtime ---
 FROM python:3.11-slim AS runtime
