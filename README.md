@@ -22,7 +22,7 @@ alembic upgrade head
 python -m agent_clicker
 ```
 
-Admin panel: http://127.0.0.1:8088
+Admin panel: http://127.0.0.1:8080
 
 ## Pointing at production tasks DB
 
