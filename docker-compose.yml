@@ -52,7 +52,9 @@ services:
                echo 'venv created' &&
                . .venv/bin/activate &&
                echo \"Python: $$(python --version)\" &&
-               echo \"uv: $$(uv --version)\""
+               echo \"uv: $$(uv --version)\" &&
+               uv pip install -e '.[dev]' psycopg2-binary &&
+               echo 'deps installed'"
 
 volumes:
   pgdata: {}
