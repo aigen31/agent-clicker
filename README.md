@@ -15,11 +15,7 @@ The service speaks to **two** Postgres instances (they may point at the same phy
 
 ```bash
 cp .env.example .env
-docker compose up -d postgres
-uv venv --python 3.11 .venv && source .venv/bin/activate
-uv pip install -e ".[dev]" psycopg2-binary
-alembic upgrade head
-python -m agent_clicker
+docker compose up -d
 ```
 
 Admin panel: http://127.0.0.1:8080
