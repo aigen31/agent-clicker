@@ -65,7 +65,7 @@ class Worker:
             browser_defaults = await self._store.get_browser()
             factory = self._build_factory(browser_defaults)
             proxy = await self._proxy_pool.acquire(preferred_geo=None)
-            spec = factory.build_spec(proxy=proxy)
+            spec = factory.build_spec(proxy=proxy, pin_desktop=bool(task.cookies))
             profile_audit = spec.to_audit_dict()
             # browser-use's StorageStateWatchdog loads cookies only from a *file path*
             # (it calls os.path.exists on the value). Materialize the dict to a JSON file
@@ -81,7 +81,11 @@ class Worker:
                 storage_state_path = str(storage_path)
                 profile_audit["cookies_count"] = len(task.cookies)
                 profile_audit["storage_state_path"] = storage_state_path
-            browser_profile = factory.build_browser_profile(spec, storage_state=storage_state_path)
+            browser_profile = factory.build_browser_profile(
+                spec,
+                storage_state=storage_state_path,
+                disable_extensions=bool(task.cookies),
+            )
 
             run_result = await self._runner.run(
                 task=task,

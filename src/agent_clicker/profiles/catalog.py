@@ -12,21 +12,21 @@ class UAEntry:
 
 
 UA_CATALOG: tuple[UAEntry, ...] = (
-    # Desktop Chrome / Windows
+    # Desktop Chrome / Windows — keep modern versions only (VK rejects older as "badbrowser")
     UAEntry(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/123.0.0.0 Safari/537.36",
+        "Chrome/131.0.0.0 Safari/537.36",
         ((1920, 1080, 1.0), (1536, 864, 1.25), (1366, 768, 1.0)),
     ),
     UAEntry(
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/122.0.0.0 Safari/537.36",
+        "Chrome/130.0.0.0 Safari/537.36",
         ((1920, 1080, 1.0), (1366, 768, 1.0)),
     ),
     # Desktop Chrome / Mac
     UAEntry(
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/123.0.0.0 Safari/537.36",
+        "Chrome/131.0.0.0 Safari/537.36",
         ((2560, 1440, 2.0), (1440, 900, 2.0), (1680, 1050, 2.0)),
     ),
     # Desktop Firefox

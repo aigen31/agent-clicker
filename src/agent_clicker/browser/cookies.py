@@ -56,7 +56,11 @@ def parse_cookie_header(raw: str, *, url: str) -> list[dict[str, Any]]:
                 "path": "/",
                 "secure": True,
                 "httpOnly": False,
-                "sameSite": "Lax",
+                # Real servers (VK, Google, etc.) set auth cookies as
+                # SameSite=None;Secure. Using "Lax" can break session-rotation
+                # flows where the server expects the cookie back on cross-site
+                # subresource redirects (observed: VK ERR_TOO_MANY_REDIRECTS).
+                "sameSite": "None",
             }
         )
     return out
@@ -81,7 +85,7 @@ def normalize_cookies(
                 "path": str(c.get("path") or "/"),
                 "secure": bool(c.get("secure", True)),
                 "httpOnly": bool(c.get("httpOnly", False)),
-                "sameSite": str(c.get("sameSite") or "Lax"),
+                "sameSite": str(c.get("sameSite") or "None"),
             }
         )
     return norm

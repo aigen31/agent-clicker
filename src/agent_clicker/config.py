@@ -56,7 +56,7 @@ class Settings(BaseSettings):
 
     boot_llm_model: str = "gpt-4o-mini"
     boot_agent_max_steps: int = 50
-    boot_agent_use_vision: bool = True
+    boot_agent_use_vision: bool = False
     boot_agent_use_thinking: bool = True
     boot_agent_max_failures: int = 5
     boot_agent_step_timeout: int = 180
@@ -78,7 +78,7 @@ class Settings(BaseSettings):
 class AgentSettings(BaseModel):
     llm_model: str = "gpt-4o-mini"
     max_steps: int = 50
-    use_vision: bool = True
+    use_vision: bool = False
     use_thinking: bool = True
     max_failures: int = 5
     step_timeout: int = 180
