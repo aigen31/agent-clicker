@@ -18,7 +18,7 @@ from agent_clicker.config import (
     WorkerRuntimeSettings,
 )
 from agent_clicker.db.engine import build_engines, dispose_engines
-from agent_clicker.db.repository import SettingsRepository, TaskRepository
+from agent_clicker.db.repository import AdProxyRepository, SettingsRepository, TaskRepository
 from agent_clicker.lifecycle import Lifespan
 from agent_clicker.observability.artifacts import ArtifactStore
 from agent_clicker.observability.broadcaster import LogBroadcaster
@@ -105,6 +105,7 @@ async def run() -> None:
         internal_session=engines.internal_session,
         default_max_attempts=worker_cfg.max_attempts,
     )
+    ad_proxy_repo = AdProxyRepository(engines.internal_session)
     artifact_store = ArtifactStore(Path(settings.artifacts_dir))
     proxy_pool = ProxyPool(settings)
     runner = AgentRunner(settings_store, artifact_store, settings)
@@ -124,6 +125,7 @@ async def run() -> None:
             profile_factory_builder=build_factory,
             runner=runner,
             artifact_store=artifact_store,
+            ad_proxy_repo=ad_proxy_repo,
         )
 
     dispatcher = Dispatcher(task_repo, settings_store, queue)
@@ -133,6 +135,7 @@ async def run() -> None:
     _validate_admin_binding(settings)
     app = create_app(
         repo=task_repo,
+        ad_proxy_repo=ad_proxy_repo,
         settings_store=settings_store,
         broadcaster=broadcaster,
         artifact_store=artifact_store,

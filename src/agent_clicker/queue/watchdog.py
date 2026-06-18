@@ -52,5 +52,5 @@ class Watchdog:
                 logger.exception("watchdog.error")
             try:
                 await asyncio.wait_for(self._stopping.wait(), timeout=self._interval)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass

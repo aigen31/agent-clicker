@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -67,7 +66,18 @@ class AgentRunner:
         agent_cfg = await self._store.get_agent()
         worker_cfg = await self._store.get_worker()
 
-        task_text = f"Перейди на {task.link} и выполни: {task.description}"
+        description = (task.description or "").strip()
+        task_text = (
+            f"Перейди на {task.link} и выполни: {description}"
+            if description
+            else (
+                f"Перейди на {task.link} и выполни следующие действия: "
+                "изучи сайт, ознакомься с его содержанием, структурой и функционалом. "
+                "Прокрути несколько страниц, просмотри разделы, "
+                "найди интересные материалы и взаимодействуй с контентом. "
+                "Веди себя как заинтересованный посетитель."
+            )
+        )
         extend = (
             (agent_cfg.extend_system_message or "")
             + "\n\nВажные замечания по навигации:\n"

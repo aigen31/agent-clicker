@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from agent_clicker.settings_store import SettingsStore
 from agent_clicker.workers.worker import Worker
@@ -42,7 +42,7 @@ class WorkerPool:
         # wait for queue to drain (bounded by lease_timeout)
         try:
             await asyncio.wait_for(self._queue.join(), timeout=cfg.lease_timeout_seconds)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("worker_pool.drain_timeout")
         for t in self._tasks:
             t.cancel()

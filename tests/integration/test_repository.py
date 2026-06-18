@@ -8,7 +8,7 @@ from agent_clicker.domain.task import TaskFilters, TaskStatus
 @pytest.mark.asyncio
 async def test_create_lease_done_flow(task_repo) -> None:
     t = await task_repo.create_task(ad_id=1, link="https://example.com", description="d")
-    assert t.status == TaskStatus.PENDING
+    assert t.status == TaskStatus.CREATED
 
     batch = await task_repo.lease_batch(worker_id="w-0", batch_size=4, lease_timeout_seconds=600)
     ids = [x.id for x in batch]
@@ -19,7 +19,7 @@ async def test_create_lease_done_flow(task_repo) -> None:
 
     await task_repo.mark_done(t.id, result={"is_successful": True}, profile={"ua": "x"})
     got = await task_repo.get_task(t.id)
-    assert got is not None and got.status == TaskStatus.DONE
+    assert got is not None and got.status == TaskStatus.COMPLETED
     assert got.result == {"is_successful": True}
 
 
@@ -69,7 +69,7 @@ async def test_requeue_from_terminal(task_repo) -> None:
     got = await task_repo.get_task(leased.id)
     assert got.status == TaskStatus.FAILED
     requeued = await task_repo.requeue(leased.id)
-    assert requeued.status == TaskStatus.PENDING
+    assert requeued.status == TaskStatus.CREATED
     assert requeued.attempts == 0
 
 

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Ad Proxy Configs{% endblock %}
+{% block body %}
+<h1>Ad Proxy Configurations</h1>
+<div x-data="adProxyPage()" x-init="load()">
+  <section>
+    <h2>Add / Edit Proxy for Ad ID</h2>
+    <form @submit.prevent="save()" style="display:flex; gap:8px; flex-wrap:wrap; align-items:end;">
+      <label>Ad ID: <input type="number" x-model.number="form.ad_id" required></label>
+      <label>Host (domain/IP): <input x-model="form.proxy_host" placeholder="dc.oxylabs.io" required></label>
+      <label>Port: <input type="number" x-model.number="form.proxy_port" placeholder="8000" required></label>
+      <label>Login: <input x-model="form.proxy_login"></label>
+      <label>Password: <input type="password" x-model="form.proxy_password"></label>
+      <button type="submit">Save</button>
+      <span x-text="status_msg" class="status"></span>
+    </form>
+  </section>
+  <table>
+    <thead><tr>
+      <th>Ad ID</th><th>Proxy Host</th><th>Port</th><th>Login</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+      <template x-for="c in configs" :key="c.ad_id">
+        <tr>
+          <td x-text="c.ad_id"></td>
+          <td x-text="c.proxy_host"></td>
+          <td x-text="c.proxy_port"></td>
+          <td x-text="c.proxy_login||''"></td>
+          <td>
+            <button @click="edit(c)">edit</button>
+            <button @click="del(c.ad_id)">delete</button>
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -7,7 +7,7 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
-from agent_clicker.domain.task import TaskDTO
+from agent_clicker.domain.task import AdProxyConfigDTO, TaskDTO
 
 T = TypeVar("T")
 
@@ -30,7 +30,7 @@ class TaskOut(BaseModel):
     cookies_count: int = 0
 
     @classmethod
-    def from_dto(cls, dto: TaskDTO) -> "TaskOut":
+    def from_dto(cls, dto: TaskDTO) -> TaskOut:
         return cls(
             id=dto.id,
             ad_id=dto.ad_id,
@@ -65,3 +65,34 @@ class CreateTaskRequest(BaseModel):
     max_attempts: int | None = None
     # Optional: cookie header string ("k=v; k2=v2") or pre-parsed Playwright cookies.
     cookies: str | list[dict[str, Any]] | None = None
+    # Manual HTTP-proxy override (domain/IP, port, login, password)
+    proxy_host: str | None = None
+    proxy_port: int | None = None
+    proxy_login: str | None = None
+    proxy_password: str | None = None
+
+
+class AdProxyConfigOut(BaseModel):
+    ad_id: int
+    proxy_host: str
+    proxy_port: int
+    proxy_login: str | None = None
+    proxy_password: str | None = None
+
+    @classmethod
+    def from_dto(cls, dto: AdProxyConfigDTO) -> AdProxyConfigOut:
+        return cls(
+            ad_id=dto.ad_id,
+            proxy_host=dto.proxy_host,
+            proxy_port=dto.proxy_port,
+            proxy_login=dto.proxy_login,
+            proxy_password=dto.proxy_password,
+        )
+
+
+class AdProxyConfigUpsert(BaseModel):
+    ad_id: int
+    proxy_host: str
+    proxy_port: int
+    proxy_login: str | None = None
+    proxy_password: str | None = None

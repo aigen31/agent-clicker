@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     proxy_provider_url: str = ""
     proxy_provider_token: SecretStr = SecretStr("")
     proxy_list: str = ""  # CSV: "server|user|pass|geo,server|..."
+    default_proxy_host: str = "dc.oxylabs.io"
+    default_proxy_port: int = 8000
 
     # Infra
     artifacts_dir: str = "./artifacts"

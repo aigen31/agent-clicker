@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 from pydantic import BaseModel

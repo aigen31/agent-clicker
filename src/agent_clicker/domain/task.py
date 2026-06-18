@@ -12,16 +12,16 @@ from pydantic import BaseModel
 class TaskStatus:
     """Status string constants (no Enum — production DB uses VARCHAR without check constraint)."""
 
-    PENDING = "created"  # external schema uses 'created' as the initial pending state
-    SCHEDULED = "scheduled"
+    CREATED = "created"  # initial state, inserted by external system
+    PENDING = "pending"  # waiting for execution (leasable, used for retries)
     IN_PROGRESS = "in_progress"
-    DONE = "done"
+    COMPLETED = "completed"
     FAILED = "failed"
-    SKIPPED = "skipped"
+    IGNOREN = "ignoren"  # execution did not happen on time / timed out / skipped
 
-    LEASABLE: tuple[str, ...] = (PENDING, SCHEDULED)
-    TERMINAL: tuple[str, ...] = (DONE, FAILED, SKIPPED)
-    ALL: tuple[str, ...] = (PENDING, SCHEDULED, IN_PROGRESS, DONE, FAILED, SKIPPED)
+    LEASABLE: tuple[str, ...] = (CREATED, PENDING)
+    TERMINAL: tuple[str, ...] = (COMPLETED, FAILED, IGNOREN)
+    ALL: tuple[str, ...] = (CREATED, PENDING, IN_PROGRESS, COMPLETED, FAILED, IGNOREN)
 
 
 @dataclass(frozen=True, slots=True)
@@ -88,3 +88,17 @@ class TaskResult:
             "finished_at": self.finished_at.isoformat() if self.finished_at else None,
             **self.extra,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class AdProxyConfigDTO:
+    """Proxy configuration linked to an ad_id."""
+    ad_id: int
+    proxy_host: str
+    proxy_port: int
+    proxy_login: str | None = None
+    proxy_password: str | None = None
+
+    @property
+    def server(self) -> str:
+        return f"{self.proxy_host}:{self.proxy_port}"

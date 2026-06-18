@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -93,7 +92,7 @@ async def test_e2e_success_flow(task_repo, settings_store, tmp_path) -> None:
 
     got = await task_repo.get_task(t.id)
     assert got is not None
-    assert got.status == TaskStatus.DONE
+    assert got.status == TaskStatus.COMPLETED
     assert got.result and got.result.get("is_successful") is True
     assert got.profile and got.profile.get("user_agent")
 

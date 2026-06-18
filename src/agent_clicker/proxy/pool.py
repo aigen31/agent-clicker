@@ -1,4 +1,4 @@
-"""Proxy pool — supports CSV PROXY_LIST and (stubbed) provider URL."""
+"""Proxy pool — supports CSV PROXY_LIST, (stubbed) provider URL, and manual per-ad proxy."""
 
 from __future__ import annotations
 
@@ -6,10 +6,10 @@ import asyncio
 import logging
 import random
 from dataclasses import dataclass
-from typing import Iterable
 
 from agent_clicker.config import Settings
 from agent_clicker.domain.profile import ProxyLease
+from agent_clicker.domain.task import AdProxyConfigDTO
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +32,16 @@ def _parse_csv(raw: str) -> list[ProxyLease]:
     return out
 
 
+def build_proxy_lease_from_config(cfg: AdProxyConfigDTO) -> ProxyLease:
+    """Build a ProxyLease from an AdProxyConfigDTO."""
+    return ProxyLease(
+        server=cfg.server,
+        username=cfg.proxy_login,
+        password=cfg.proxy_password,
+        geo=None,
+    )
+
+
 class ProxyPool:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
@@ -40,7 +50,6 @@ class ProxyPool:
 
     async def start(self) -> None:
         leases = _parse_csv(self._settings.proxy_list)
-        # provider URL not implemented — only CSV in MVP
         self._entries = [_ProxyEntry(lease=lease) for lease in leases]
         logger.info("proxy_pool.start", extra={"size": len(self._entries)})
 

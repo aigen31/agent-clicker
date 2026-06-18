@@ -4,7 +4,7 @@
 <h1>Tasks</h1>
 <div x-data="tasksPage()" x-init="load()">
   <div class="filters">
-    <label>Status: <input x-model="filters.status" placeholder="created/in_progress/done/failed"></label>
+    <label>Status: <input x-model="filters.status" placeholder="created/pending/in_progress/completed/failed/ignoren"></label>
     <label>ad_id: <input type="number" x-model.number="filters.ad_id"></label>
     <button @click="load()">Refresh</button>
   </div>
@@ -16,6 +16,15 @@
       <input placeholder="link (https://…)" x-model="newTask.link" required>
       <textarea placeholder="description" x-model="newTask.description" required></textarea>
       <textarea placeholder="cookies (optional, header format: k=v; k2=v2)" x-model="newTask.cookies" rows="3"></textarea>
+      <fieldset style="margin:8px 0; padding:8px; border:1px solid #ddd;">
+        <legend>HTTP Proxy (optional, saved to ad-proxy config)</legend>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <label style="flex:1; min-width:160px;">Host: <input x-model="newTask.proxy_host" placeholder="dc.oxylabs.io" style="width:100%;"></label>
+          <label style="flex:0; min-width:80px;">Port: <input type="number" x-model.number="newTask.proxy_port" placeholder="8000" style="width:100%;"></label>
+          <label style="flex:1; min-width:120px;">Login: <input x-model="newTask.proxy_login" style="width:100%;"></label>
+          <label style="flex:1; min-width:120px;">Password: <input type="password" x-model="newTask.proxy_password" style="width:100%;"></label>
+        </div>
+      </fieldset>
       <button>Create</button>
     </form>
   </details>

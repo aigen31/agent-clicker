@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import HTTPException, Request
 
 from agent_clicker.config import Settings
-from agent_clicker.db.repository import TaskRepository
+from agent_clicker.db.repository import AdProxyRepository, TaskRepository
 from agent_clicker.observability.artifacts import ArtifactStore
 from agent_clicker.observability.broadcaster import LogBroadcaster
 from agent_clicker.settings_store import SettingsStore
@@ -13,6 +13,10 @@ from agent_clicker.settings_store import SettingsStore
 
 def get_task_repo(request: Request) -> TaskRepository:
     return request.app.state.task_repo
+
+
+def get_ad_proxy_repo(request: Request) -> AdProxyRepository:
+    return request.app.state.ad_proxy_repo
 
 
 def get_settings_store(request: Request) -> SettingsStore:

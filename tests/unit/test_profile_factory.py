@@ -1,6 +1,6 @@
-from agent_clicker.profiles.catalog import GEO_LOCALE_TZ
 from agent_clicker.config import BrowserProfileDefaults, Settings
 from agent_clicker.domain.profile import ProxyLease
+from agent_clicker.profiles.catalog import GEO_LOCALE_TZ
 from agent_clicker.profiles.factory import ProfileFactory
 
 

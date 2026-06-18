@@ -4,7 +4,7 @@ function tasksPage(){
   return {
     tasks:[], total:0, page:1, page_size:25,
     filters:{ status:'', ad_id:null },
-    newTask:{ ad_id:1, link:'https://example.com', description:'Test task', cookies:'' },
+    newTask:{ ad_id:1, link:'https://example.com', description:'Test task', cookies:'', proxy_host:'', proxy_port:null, proxy_login:'', proxy_password:'' },
     async load(){
       const params=new URLSearchParams();
       if(this.filters.status) params.set('status', this.filters.status);
@@ -19,11 +19,37 @@ function tasksPage(){
     async create(){
       const payload={ ad_id:this.newTask.ad_id, link:this.newTask.link, description:this.newTask.description };
       if(this.newTask.cookies && this.newTask.cookies.trim()) payload.cookies=this.newTask.cookies.trim();
+      if(this.newTask.proxy_host) payload.proxy_host=this.newTask.proxy_host;
+      if(this.newTask.proxy_port) payload.proxy_port=this.newTask.proxy_port;
+      if(this.newTask.proxy_login) payload.proxy_login=this.newTask.proxy_login;
+      if(this.newTask.proxy_password) payload.proxy_password=this.newTask.proxy_password;
       const r=await fetch('/api/tasks',{ method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify(payload) });
       if(r.ok){ this.newTask.cookies=''; this.load(); } else { alert('error: '+await r.text()); }
     },
     async retry(id){ await fetch('/api/tasks/'+id+'/retry',{method:'POST'}); this.load(); },
     async del(id){ if(!confirm('delete '+id+'?')) return; await fetch('/api/tasks/'+id,{method:'DELETE'}); this.load(); },
+  };
+}
+
+function adProxyPage(){
+  return {
+    configs:[], status_msg:'',
+    form:{ ad_id:0, proxy_host:'dc.oxylabs.io', proxy_port:8000, proxy_login:'', proxy_password:'' },
+    async load(){
+      const r=await fetch('/api/ad-proxy'); this.configs=await r.json();
+    },
+    edit(c){
+      this.form.ad_id=c.ad_id; this.form.proxy_host=c.proxy_host; this.form.proxy_port=c.proxy_port;
+      this.form.proxy_login=c.proxy_login||''; this.form.proxy_password=c.proxy_password||'';
+    },
+    async save(){
+      const body={ ad_id:this.form.ad_id, proxy_host:this.form.proxy_host, proxy_port:this.form.proxy_port, proxy_login:this.form.proxy_login||null, proxy_password:this.form.proxy_password||null };
+      const r=await fetch('/api/ad-proxy/'+this.form.ad_id,{ method:'PUT', headers:{'content-type':'application/json'}, body:JSON.stringify(body) });
+      if(r.ok){ this.status_msg='saved'; this.load(); this.form={ ad_id:0, proxy_host:'dc.oxylabs.io', proxy_port:8000, proxy_login:'', proxy_password:'' }; }
+      else { this.status_msg='error: '+await r.text(); }
+      setTimeout(()=>{this.status_msg='';},2000);
+    },
+    async del(ad_id){ if(!confirm('delete proxy for ad '+ad_id+'?')) return; await fetch('/api/ad-proxy/'+ad_id,{method:'DELETE'}); this.load(); },
   };
 }
 

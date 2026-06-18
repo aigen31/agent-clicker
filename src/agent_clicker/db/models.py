@@ -55,7 +55,7 @@ class Task(ExternalBase):
         Index(
             "ix_tasks_ready",
             "exec_time",
-            postgresql_where="status IN ('created','scheduled')",
+            postgresql_where="status IN ('created','pending')",
         ),
     )
 
@@ -92,6 +92,25 @@ class TaskRuntime(InternalBase):
     )
 
     __table_args__ = (Index("ix_runtime_locked_at", "locked_at"),)
+
+
+class AdProxyConfig(InternalBase):
+    """Per-ad_id proxy configuration for automatic proxy selection."""
+
+    __tablename__ = "ad_proxy_configs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ad_id: Mapped[int] = mapped_column(Integer, unique=True, nullable=False, index=True)
+    proxy_host: Mapped[str] = mapped_column(String, nullable=False)
+    proxy_port: Mapped[int] = mapped_column(Integer, nullable=False)
+    proxy_login: Mapped[str | None] = mapped_column(String, nullable=True)
+    proxy_password: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
 
 class Setting(InternalBase):

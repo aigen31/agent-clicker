@@ -10,11 +10,11 @@ th, td { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: left; vert
 th { background: #f3f4f6; }
 .badge { padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 .st-created { background: #dbeafe; color: #1e40af; }
+.st-pending { background: #ede9fe; color: #5b21b6; }
 .st-in_progress { background: #fef3c7; color: #92400e; }
-.st-done { background: #d1fae5; color: #065f46; }
+.st-completed { background: #d1fae5; color: #065f46; }
 .st-failed { background: #fee2e2; color: #991b1b; }
-.st-skipped { background: #e5e7eb; color: #374151; }
-.st-scheduled { background: #ede9fe; color: #5b21b6; }
+.st-ignoren { background: #e5e7eb; color: #374151; }
 .filters { margin-bottom: 14px; }
 .filters label { margin-right: 14px; }
 .pager { margin-top: 14px; }

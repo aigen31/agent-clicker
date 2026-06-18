@@ -16,7 +16,6 @@ from typing import Any
 
 from agent_clicker.config import AgentSettings, Settings
 
-
 _MD_JSON_FENCE_RE = re.compile(
     r"^```(?:json)?\s*\n(.*?)\n```\s*$",
     re.DOTALL | re.MULTILINE,

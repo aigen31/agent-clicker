@@ -19,7 +19,7 @@ class Lifespan:
         self._components = components
         self._stop_timeout = stop_timeout
 
-    async def __aenter__(self) -> "Lifespan":
+    async def __aenter__(self) -> Lifespan:
         for c in self._components:
             await c.start()
         return self
@@ -28,7 +28,7 @@ class Lifespan:
         for c in reversed(self._components):
             try:
                 await asyncio.wait_for(c.stop(), timeout=self._stop_timeout)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning("lifecycle.stop.timeout", extra={"component": type(c).__name__})
             except Exception:
                 logger.exception("lifecycle.stop.error")

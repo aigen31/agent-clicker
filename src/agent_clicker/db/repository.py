@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Any, Sequence
+from typing import Any
 
-from sqlalchemy import and_, delete, func, select, text, true, update
+from sqlalchemy import and_, delete, func, select, true, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from agent_clicker.db.models import Ad, Setting, Task, TaskRuntime
-from agent_clicker.domain.task import Page, TaskDTO, TaskFilters, TaskStatus
+from agent_clicker.db.models import Ad, AdProxyConfig, Setting, Task, TaskRuntime
+from agent_clicker.domain.task import AdProxyConfigDTO, Page, TaskDTO, TaskFilters, TaskStatus
 
 
 def _now() -> datetime:
@@ -21,7 +21,7 @@ def _now() -> datetime:
 def _truncate(value: str | None, limit: int = 4000) -> str | None:
     if value is None:
         return None
-    return value if len(value) <= limit else value[: limit - 1] + "…"
+    return value if len(value) <= limit else value[: limit - 1] + "\u2026"
 
 
 def _row_to_dto(task: Task, runtime: TaskRuntime | None) -> TaskDTO:
@@ -122,12 +122,12 @@ class TaskRepository:
                             )
                         )
         except Exception:
-            # Compensating action — release external lease.
+            # Compensating action — release external lease back to created.
             async with self._ext() as session, session.begin():
                 await session.execute(
                     update(Task)
                     .where(Task.id.in_(leased_ids))
-                    .values(status=TaskStatus.PENDING)
+                    .values(status=TaskStatus.CREATED)
                 )
             raise
 
@@ -156,7 +156,7 @@ class TaskRepository:
             await session.execute(
                 update(Task)
                 .where(Task.id == task_id, Task.status == TaskStatus.IN_PROGRESS)
-                .values(status=TaskStatus.DONE)
+                .values(status=TaskStatus.COMPLETED)
             )
         async with self._intl() as session, session.begin():
             await session.execute(
@@ -175,7 +175,7 @@ class TaskRepository:
     ) -> None:
         err = _truncate(error)
         if retry_at is not None:
-            # backoff retry → leasable again
+            # backoff retry → leasable again (pending)
             async with self._ext() as session, session.begin():
                 await session.execute(
                     update(Task)
@@ -207,12 +207,12 @@ class TaskRepository:
                     .values(last_error=err, profile=profile, locked_at=None)
                 )
 
-    async def mark_skipped(self, task_id: int, *, reason: str) -> None:
+    async def mark_ignored(self, task_id: int, *, reason: str) -> None:
         async with self._ext() as session, session.begin():
             await session.execute(
                 update(Task)
                 .where(Task.id == task_id, Task.status == TaskStatus.IN_PROGRESS)
-                .values(status=TaskStatus.SKIPPED)
+                .values(status=TaskStatus.IGNOREN)
             )
         async with self._intl() as session, session.begin():
             await session.execute(
@@ -337,7 +337,7 @@ class TaskRepository:
                 await session.flush()
             task = Task(
                 ad_id=ad_id,
-                status=TaskStatus.PENDING,
+                status=TaskStatus.CREATED,
                 description=description,
                 link=link,
                 exec_time=exec_time,
@@ -375,7 +375,7 @@ class TaskRepository:
                     Task.id == task_id,
                     Task.status.in_(TaskStatus.TERMINAL),
                 )
-                .values(status=TaskStatus.PENDING, exec_time=None)
+                .values(status=TaskStatus.CREATED, exec_time=None)
             )
         async with self._intl() as session, session.begin():
             await session.execute(
@@ -412,4 +412,85 @@ class SettingsRepository:
             await session.execute(stmt)
 
 
-__all__ = ["TaskRepository", "SettingsRepository"]
+class AdProxyRepository:
+    """CRUD for per-ad_id proxy configurations (internal table)."""
+
+    def __init__(self, internal_session: async_sessionmaker[AsyncSession]) -> None:
+        self._intl = internal_session
+
+    async def get_by_ad_id(self, ad_id: int) -> AdProxyConfigDTO | None:
+        async with self._intl() as session:
+            row = (
+                await session.execute(
+                    select(AdProxyConfig).where(AdProxyConfig.ad_id == ad_id)
+                )
+            ).scalar_one_or_none()
+            if row is None:
+                return None
+            return AdProxyConfigDTO(
+                ad_id=row.ad_id,
+                proxy_host=row.proxy_host,
+                proxy_port=row.proxy_port,
+                proxy_login=row.proxy_login,
+                proxy_password=row.proxy_password,
+            )
+
+    async def list_all(self) -> list[AdProxyConfigDTO]:
+        async with self._intl() as session:
+            rows = (
+                await session.execute(
+                    select(AdProxyConfig).order_by(AdProxyConfig.ad_id.asc())
+                )
+            ).scalars().all()
+        return [
+            AdProxyConfigDTO(
+                ad_id=r.ad_id,
+                proxy_host=r.proxy_host,
+                proxy_port=r.proxy_port,
+                proxy_login=r.proxy_login,
+                proxy_password=r.proxy_password,
+            )
+            for r in rows
+        ]
+
+    async def upsert(
+        self,
+        *,
+        ad_id: int,
+        proxy_host: str,
+        proxy_port: int,
+        proxy_login: str | None = None,
+        proxy_password: str | None = None,
+    ) -> AdProxyConfigDTO:
+        async with self._intl() as session, session.begin():
+            stmt = pg_insert(AdProxyConfig).values(
+                ad_id=ad_id,
+                proxy_host=proxy_host,
+                proxy_port=proxy_port,
+                proxy_login=proxy_login,
+                proxy_password=proxy_password,
+            )
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[AdProxyConfig.ad_id],
+                set_={
+                    "proxy_host": proxy_host,
+                    "proxy_port": proxy_port,
+                    "proxy_login": proxy_login,
+                    "proxy_password": proxy_password,
+                    "updated_at": func.now(),
+                },
+            )
+            await session.execute(stmt)
+        dto = await self.get_by_ad_id(ad_id)
+        assert dto is not None
+        return dto
+
+    async def delete(self, ad_id: int) -> bool:
+        async with self._intl() as session, session.begin():
+            res = await session.execute(
+                delete(AdProxyConfig).where(AdProxyConfig.ad_id == ad_id)
+            )
+            return (res.rowcount or 0) > 0
+
+
+__all__ = ["TaskRepository", "SettingsRepository", "AdProxyRepository"]

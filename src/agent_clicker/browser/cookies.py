@@ -11,7 +11,7 @@ Input formats supported:
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import unquote, urlparse
+from urllib.parse import urlparse
 
 
 def _domain_from_url(url: str) -> str:

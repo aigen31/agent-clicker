@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 import asyncio
-import logging
-from datetime import datetime, timedelta
-from typing import Any, Callable
-
 import json
+import logging
+from collections.abc import Callable
+from datetime import datetime, timedelta
+from typing import Any
 
 from agent_clicker.browser.runner import AgentRunner
 from agent_clicker.config import BrowserProfileDefaults
-from agent_clicker.db.repository import TaskRepository
+from agent_clicker.db.repository import AdProxyRepository, TaskRepository
 from agent_clicker.domain.task import TaskDTO, TaskResult
 from agent_clicker.observability.artifacts import ArtifactStore
 from agent_clicker.observability.logging import current_task_id, current_worker_id
 from agent_clicker.profiles.factory import ProfileFactory
-from agent_clicker.proxy.pool import ProxyPool
+from agent_clicker.proxy.pool import ProxyPool, build_proxy_lease_from_config
 from agent_clicker.settings_store import SettingsStore
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,7 @@ class Worker:
         profile_factory_builder: ProfileFactoryBuilder,
         runner: AgentRunner,
         artifact_store: ArtifactStore,
+        ad_proxy_repo: AdProxyRepository | None = None,
     ) -> None:
         self.worker_id = worker_id
         self._queue = in_queue
@@ -46,6 +47,7 @@ class Worker:
         self._build_factory = profile_factory_builder
         self._runner = runner
         self._artifacts = artifact_store
+        self._ad_proxy_repo = ad_proxy_repo
 
     async def run(self) -> None:
         while True:
@@ -64,7 +66,20 @@ class Worker:
         try:
             browser_defaults = await self._store.get_browser()
             factory = self._build_factory(browser_defaults)
-            proxy = await self._proxy_pool.acquire(preferred_geo=None)
+
+            # Resolve proxy: check ad-proxy config first, then fall back to pool.
+            proxy = None
+            if self._ad_proxy_repo and task.ad_id:
+                ad_proxy_cfg = await self._ad_proxy_repo.get_by_ad_id(task.ad_id)
+                if ad_proxy_cfg:
+                    proxy = build_proxy_lease_from_config(ad_proxy_cfg)
+                    logger.debug(
+                        "worker.ad_proxy_resolved",
+                        extra={"ad_id": task.ad_id, "server": proxy.server},
+                    )
+            if proxy is None:
+                proxy = await self._proxy_pool.acquire(preferred_geo=None)
+
             spec = factory.build_spec(proxy=proxy, pin_desktop=bool(task.cookies))
             profile_audit = spec.to_audit_dict()
             # browser-use's StorageStateWatchdog loads cookies only from a *file path*

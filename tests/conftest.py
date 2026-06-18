@@ -5,10 +5,8 @@ If `EXTERNAL_TASKS_DSN` is not set, tests requiring DB are skipped.
 
 from __future__ import annotations
 
-import asyncio
 import os
 import socket
-from pathlib import Path
 
 import pytest
 import pytest_asyncio
@@ -62,8 +60,9 @@ async def engines(settings: Settings, db_available: bool):
 
 @pytest_asyncio.fixture
 async def task_repo(engines):
-    from agent_clicker.db.repository import TaskRepository
     from sqlalchemy import text
+
+    from agent_clicker.db.repository import TaskRepository
 
     # clean tables between tests
     async with engines.external.begin() as conn:
@@ -72,6 +71,7 @@ async def task_repo(engines):
     async with engines.internal.begin() as conn:
         await conn.execute(text("DELETE FROM task_runtime"))
         await conn.execute(text("DELETE FROM settings"))
+        await conn.execute(text("DELETE FROM ad_proxy_configs"))
 
     return TaskRepository(
         external_session=engines.external_session,

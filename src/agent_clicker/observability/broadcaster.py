@@ -5,7 +5,8 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections import deque
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from agent_clicker.observability.logging import record_to_dict
 
