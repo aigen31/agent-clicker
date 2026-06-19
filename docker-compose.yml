@@ -1,3 +1,6 @@
+x-local-dsn: &local-dsn
+  postgresql+asyncpg://agent:agent@postgres:5432/agent_clicker
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -24,8 +27,8 @@ services:
         condition: service_healthy
     env_file: .env
     environment:
-      EXTERNAL_TASKS_DSN: postgresql+asyncpg://agent:agent@postgres:5432/agent_clicker
-      INTERNAL_STATE_DSN: postgresql+asyncpg://agent:agent@postgres:5432/agent_clicker
+      EXTERNAL_TASKS_DSN: *local-dsn
+      INTERNAL_STATE_DSN: *local-dsn
       ADMIN_HOST: 0.0.0.0
       ADMIN_PORT: "8080"
       ADMIN_ALLOW_PUBLIC: "true"

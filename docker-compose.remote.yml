@@ -1,0 +1,16 @@
+# docker-compose.remote.yml — overrides для подключения к удалённому PostgreSQL.
+#
+# Режим работы: внешняя БД (EXTERNAL_TASKS_DSN) → удалённый сервер (rsya_boost).
+# Внутреннее состояние (INTERNAL_STATE_DSN) → локальный postgres.
+#
+# Использование:
+#   docker compose -f docker-compose.yml -f docker-compose.remote.yml up
+#
+# Локальный режим (по умолчанию, без этого файла):
+#   docker compose up
+#   → обе БД на локальном postgres.
+
+services:
+  app:
+    environment:
+      EXTERNAL_TASKS_DSN: ${EXTERNAL_TASKS_DSN}
