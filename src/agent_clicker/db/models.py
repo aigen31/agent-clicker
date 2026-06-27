@@ -113,6 +113,24 @@ class AdProxyConfig(InternalBase):
     )
 
 
+class TaskProxy(InternalBase):
+    """Per-task proxy configuration, keyed by task_id."""
+
+    __tablename__ = "task_proxies"
+
+    task_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    proxy_host: Mapped[str] = mapped_column(String, nullable=False)
+    proxy_port: Mapped[int] = mapped_column(Integer, nullable=False)
+    proxy_login: Mapped[str | None] = mapped_column(String, nullable=True)
+    proxy_password: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class Setting(InternalBase):
     __tablename__ = "settings"
 

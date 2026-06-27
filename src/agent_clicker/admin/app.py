@@ -9,10 +9,10 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from agent_clicker.admin.routers import ad_proxy, artifacts, health, logs_ws, tasks
+from agent_clicker.admin.routers import ad_proxy, artifacts, health, logs_ws, task_proxy, tasks
 from agent_clicker.admin.routers import settings as settings_router
 from agent_clicker.config import Settings
-from agent_clicker.db.repository import AdProxyRepository, TaskRepository
+from agent_clicker.db.repository import AdProxyRepository, TaskProxyRepository, TaskRepository
 from agent_clicker.observability.artifacts import ArtifactStore
 from agent_clicker.observability.broadcaster import LogBroadcaster
 from agent_clicker.settings_store import SettingsStore
@@ -25,6 +25,7 @@ def create_app(
     *,
     repo: TaskRepository,
     ad_proxy_repo: AdProxyRepository,
+    task_proxy_repo: TaskProxyRepository,
     settings_store: SettingsStore,
     broadcaster: LogBroadcaster,
     artifact_store: ArtifactStore,
@@ -33,6 +34,7 @@ def create_app(
     app = FastAPI(title="agent-clicker admin", version="0.1.0")
     app.state.task_repo = repo
     app.state.ad_proxy_repo = ad_proxy_repo
+    app.state.task_proxy_repo = task_proxy_repo
     app.state.settings_store = settings_store
     app.state.broadcaster = broadcaster
     app.state.artifact_store = artifact_store
@@ -41,6 +43,7 @@ def create_app(
     app.include_router(health.router)
     app.include_router(tasks.router)
     app.include_router(ad_proxy.router)
+    app.include_router(task_proxy.router)
     app.include_router(settings_router.router)
     app.include_router(artifacts.router)
     app.include_router(logs_ws.router)

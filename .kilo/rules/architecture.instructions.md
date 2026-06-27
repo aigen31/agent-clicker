@@ -64,13 +64,13 @@ agent-clicker/
 │       ├── config.py                    # Settings + dynamic-settings pydantic-модели
 │       │
 │       ├── domain/
-│       │   ├── task.py                  # TaskStatus, TaskDTO, TaskResult, TaskFilters, Page
+│       │   ├── task.py                  # TaskStatus, TaskDTO, TaskResult, TaskFilters, Page, AdProxyConfigDTO, TaskProxyConfigDTO
 │       │   └── profile.py               # ProxyLease, ProfileSpec
 │       │
 │       ├── db/
 │       │   ├── engine.py                # create_async_engine, async_sessionmaker
-│       │   ├── models.py                # SQLAlchemy: Task, Setting
-│       │   ├── repository.py            # TaskRepository, SettingsRepository
+│       │   ├── models.py                # SQLAlchemy: Task, TaskRuntime, TaskProxy, AdProxyConfig, Setting
+│       │   ├── repository.py            # TaskRepository, SettingsRepository, AdProxyRepository, TaskProxyRepository
 │       │   └── migrations/
 │       │       ├── env.py
 │       │       └── versions/0001_initial.py
@@ -133,6 +133,8 @@ agent-clicker/
 - **`TaskStatus`** (StrEnum): `pending | scheduled | in_progress | done | failed | skipped`
 - **`TaskDTO`**: полное представление задачи — id, ad_id, status, description, link, created_at, exec_time, attempts, max_attempts, last_error, worker_id, locked_at, profile (JSONB), result (JSONB)
 - **`TaskResult`**: итог выполнения — is_successful, steps, duration_seconds, final_result, artifacts_dir, error, scheduled_at, started_at, finished_at
+- **`AdProxyConfigDTO`**: прокси-конфигурация, привязанная к ad_id — ad_id, proxy_host, proxy_port, proxy_login, proxy_password
+- **`TaskProxyConfigDTO`**: прокси-конфигурация, привязанная к конкретному task_id — task_id, proxy_host, proxy_port, proxy_login, proxy_password
 - **`TaskFilters`**: опциональные фильтры для Admin API — status, ad_id, created_from, created_to
 - **`Page[T]`**: generic-пагинация — items, total, page, page_size
 
@@ -175,6 +177,12 @@ agent-clicker/
 - Колонки: id (BigInteger PK), ad_id (BigInteger), status (SAEnum `task_status`), description (Text), link (Text), created_at (TIMESTAMPTZ, server_default=now()), exec_time (TIMESTAMPTZ), attempts (Integer), max_attempts (Integer), last_error (Text), worker_id (Text), locked_at (TIMESTAMPTZ), profile (JSONB), result (JSONB)
 - Индексы: `(status, exec_time)`, частичный `(exec_time) WHERE status IN ('pending','scheduled')`
 
+**`TaskRuntime`** (таблица `task_runtime`, internal): служебные поля задачи — task_id (BigInteger PK), attempts, max_attempts, last_error, worker_id, locked_at, profile (JSONB, аудит-профиль браузера), result (JSONB, результат агента), cookies (JSONB), updated_at
+
+**`TaskProxy`** (таблица `task_proxies`, internal): прокси-конфигурация, привязанная к конкретному task_id — task_id (BigInteger PK), proxy_host, proxy_port, proxy_login, proxy_password, created_at, updated_at
+
+**`AdProxyConfig`** (таблица `ad_proxy_configs`, internal): прокси-конфигурация, привязанная к ad_id — id (Integer PK), ad_id (unique), proxy_host, proxy_port, proxy_login, proxy_password, created_at, updated_at
+
 **`Setting`** (таблица `settings`): key (Text PK), value (JSONB), updated_at (TIMESTAMPTZ, auto-update)
 
 ### 4.2 `db/repository.py`
@@ -196,6 +204,18 @@ agent-clicker/
 - `get(key)` → `dict | None`
 - `upsert(key, value)` → `None`
 - `get_all()` → `dict[str, dict]`
+
+**AdProxyRepository** — CRUD по таблице `ad_proxy_configs`:
+- `get_by_ad_id(ad_id)` → `AdProxyConfigDTO | None`
+- `list_all()` → `list[AdProxyConfigDTO]`
+- `upsert(ad_id, proxy_host, proxy_port, ...)` → `AdProxyConfigDTO`
+- `delete(ad_id)` → `bool`
+
+**TaskProxyRepository** — CRUD по таблице `task_proxies`:
+- `get_by_task_id(task_id)` → `TaskProxyConfigDTO | None`
+- `list_all()` → `list[TaskProxyConfigDTO]`
+- `upsert(task_id, proxy_host, proxy_port, ...)` → `TaskProxyConfigDTO`
+- `delete(task_id)` → `bool`
 
 ### 4.3 Миграция `0001_initial.py`
 
@@ -228,6 +248,16 @@ Singleton-инстанс создаётся в `main.py` и пробрасыва
 - `release(lease, *, healthy)`: помечает unhealthy прокси на backoff (не выдавать N минут)
 
 Если в env нет ни `PROXY_PROVIDER_URL`, ни `PROXY_LIST` — пул пуст, `acquire()` всегда возвращает `None`. Это валидный dev-режим.
+
+### 6.2 Приоритет резолвинга прокси (Worker._handle)
+
+При выполнении задачи Worker разрешает прокси в следующем порядке:
+
+1. **`task_proxies`** (per-task) — если для `task_id` есть запись в таблице `task_proxies`, используется она. Это **индивидуальный прокси конкретной задачи**, заданный при создании через `POST /api/tasks` с полями `proxy_host`/`proxy_port`.
+2. **`ad_proxy_configs`** (per-ad) — если per-task прокси нет, проверяется `task.ad_id` в таблице `ad_proxy_configs`.
+3. **`ProxyPool`** (общий пул) — если no per-task и per-ad прокси, берётся случайный прокси из `PROXY_LIST`.
+
+Приоритет гарантирует, что при явном задании прокси для задачи она всегда использует один и тот же IP даже при retry (запись в `task_proxies` не меняется при requeue).
 
 ---
 

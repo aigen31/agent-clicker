@@ -6,10 +6,10 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from agent_clicker.admin.dependencies import get_ad_proxy_repo, get_task_repo, require_mutations
+from agent_clicker.admin.dependencies import get_ad_proxy_repo, get_task_proxy_repo, get_task_repo, require_mutations
 from agent_clicker.admin.schemas import CreateTaskRequest, PageOut, TaskOut
 from agent_clicker.browser.cookies import coerce_cookies
-from agent_clicker.db.repository import AdProxyRepository, TaskRepository
+from agent_clicker.db.repository import AdProxyRepository, TaskProxyRepository, TaskRepository
 from agent_clicker.domain.task import TaskFilters
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
@@ -56,6 +56,7 @@ async def create_task(
     body: CreateTaskRequest,
     repo: TaskRepository = Depends(get_task_repo),
     ad_proxy_repo: AdProxyRepository = Depends(get_ad_proxy_repo),
+    task_proxy_repo: TaskProxyRepository = Depends(get_task_proxy_repo),
     _: None = Depends(require_mutations),
 ) -> TaskOut:
     dto = await repo.create_task(
@@ -67,8 +68,8 @@ async def create_task(
         cookies=coerce_cookies(body.cookies, url=body.link) or None,
     )
     if body.proxy_host and body.proxy_port:
-        await ad_proxy_repo.upsert(
-            ad_id=body.ad_id,
+        await task_proxy_repo.upsert(
+            task_id=dto.id,
             proxy_host=body.proxy_host,
             proxy_port=body.proxy_port,
             proxy_login=body.proxy_login,

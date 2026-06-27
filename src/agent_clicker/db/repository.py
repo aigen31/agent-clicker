@@ -9,8 +9,8 @@ from sqlalchemy import and_, delete, func, select, true, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from agent_clicker.db.models import Ad, AdProxyConfig, Setting, Task, TaskRuntime
-from agent_clicker.domain.task import AdProxyConfigDTO, Page, TaskDTO, TaskFilters, TaskStatus
+from agent_clicker.db.models import Ad, AdProxyConfig, Setting, Task, TaskProxy, TaskRuntime
+from agent_clicker.domain.task import AdProxyConfigDTO, Page, TaskDTO, TaskFilters, TaskProxyConfigDTO, TaskStatus
 
 
 def _now() -> datetime:
@@ -493,4 +493,85 @@ class AdProxyRepository:
             return (res.rowcount or 0) > 0
 
 
-__all__ = ["TaskRepository", "SettingsRepository", "AdProxyRepository"]
+class TaskProxyRepository:
+    """CRUD for per-task_id proxy configurations (internal table)."""
+
+    def __init__(self, internal_session: async_sessionmaker[AsyncSession]) -> None:
+        self._intl = internal_session
+
+    async def get_by_task_id(self, task_id: int) -> TaskProxyConfigDTO | None:
+        async with self._intl() as session:
+            row = (
+                await session.execute(
+                    select(TaskProxy).where(TaskProxy.task_id == task_id)
+                )
+            ).scalar_one_or_none()
+            if row is None:
+                return None
+            return TaskProxyConfigDTO(
+                task_id=row.task_id,
+                proxy_host=row.proxy_host,
+                proxy_port=row.proxy_port,
+                proxy_login=row.proxy_login,
+                proxy_password=row.proxy_password,
+            )
+
+    async def list_all(self) -> list[TaskProxyConfigDTO]:
+        async with self._intl() as session:
+            rows = (
+                await session.execute(
+                    select(TaskProxy).order_by(TaskProxy.task_id.desc())
+                )
+            ).scalars().all()
+        return [
+            TaskProxyConfigDTO(
+                task_id=r.task_id,
+                proxy_host=r.proxy_host,
+                proxy_port=r.proxy_port,
+                proxy_login=r.proxy_login,
+                proxy_password=r.proxy_password,
+            )
+            for r in rows
+        ]
+
+    async def upsert(
+        self,
+        *,
+        task_id: int,
+        proxy_host: str,
+        proxy_port: int,
+        proxy_login: str | None = None,
+        proxy_password: str | None = None,
+    ) -> TaskProxyConfigDTO:
+        async with self._intl() as session, session.begin():
+            stmt = pg_insert(TaskProxy).values(
+                task_id=task_id,
+                proxy_host=proxy_host,
+                proxy_port=proxy_port,
+                proxy_login=proxy_login,
+                proxy_password=proxy_password,
+            )
+            stmt = stmt.on_conflict_do_update(
+                index_elements=[TaskProxy.task_id],
+                set_={
+                    "proxy_host": proxy_host,
+                    "proxy_port": proxy_port,
+                    "proxy_login": proxy_login,
+                    "proxy_password": proxy_password,
+                    "updated_at": func.now(),
+                },
+            )
+            await session.execute(stmt)
+        dto = await self.get_by_task_id(task_id)
+        assert dto is not None
+        return dto
+
+    async def delete(self, task_id: int) -> bool:
+        async with self._intl() as session, session.begin():
+            res = await session.execute(
+                delete(TaskProxy).where(TaskProxy.task_id == task_id)
+            )
+            return (res.rowcount or 0) > 0
+
+
+__all__ = ["TaskRepository", "SettingsRepository", "AdProxyRepository", "TaskProxyRepository"]

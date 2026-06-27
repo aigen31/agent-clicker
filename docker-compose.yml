@@ -32,6 +32,7 @@ services:
       ADMIN_HOST: 0.0.0.0
       ADMIN_PORT: "8080"
       ADMIN_ALLOW_PUBLIC: "true"
+      ARTIFACTS_DIR: "/tmp/artifacts"
       # browser-use event timeouts (defaults 30s — too tight under load).
       TIMEOUT_BrowserStartEvent: "120"
       TIMEOUT_BrowserLaunchEvent: "120"
@@ -39,7 +40,7 @@ services:
       TIMEOUT_NavigateToUrlEvent: "90"
       TIMEOUT_BrowserStateRequestEvent: "60"
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8080"
     volumes:
       - ./artifacts:/app/artifacts
     shm_size: "1gb"

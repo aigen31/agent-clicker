@@ -66,8 +66,11 @@ class ProfileFactory:
 
         proxy_settings = None
         if spec.proxy:
+            server = spec.proxy.server
+            if "://" not in server:
+                server = "http://" + server
             proxy_settings = ProxySettings(
-                server=spec.proxy.server,
+                server=server,
                 username=spec.proxy.username or "",
                 password=spec.proxy.password or "",
             )

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from agent_clicker.config import Settings
 from agent_clicker.domain.profile import ProxyLease
-from agent_clicker.domain.task import AdProxyConfigDTO
+from agent_clicker.domain.task import AdProxyConfigDTO, TaskProxyConfigDTO
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,16 @@ def _parse_csv(raw: str) -> list[ProxyLease]:
 
 def build_proxy_lease_from_config(cfg: AdProxyConfigDTO) -> ProxyLease:
     """Build a ProxyLease from an AdProxyConfigDTO."""
+    return ProxyLease(
+        server=cfg.server,
+        username=cfg.proxy_login,
+        password=cfg.proxy_password,
+        geo=None,
+    )
+
+
+def build_proxy_lease_from_task_config(cfg: TaskProxyConfigDTO) -> ProxyLease:
+    """Build a ProxyLease from a TaskProxyConfigDTO."""
     return ProxyLease(
         server=cfg.server,
         username=cfg.proxy_login,

@@ -102,3 +102,17 @@ class AdProxyConfigDTO:
     @property
     def server(self) -> str:
         return f"{self.proxy_host}:{self.proxy_port}"
+
+
+@dataclass(frozen=True, slots=True)
+class TaskProxyConfigDTO:
+    """Proxy configuration linked to a specific task_id."""
+    task_id: int
+    proxy_host: str
+    proxy_port: int
+    proxy_login: str | None = None
+    proxy_password: str | None = None
+
+    @property
+    def server(self) -> str:
+        return f"{self.proxy_host}:{self.proxy_port}"

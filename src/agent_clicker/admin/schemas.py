@@ -7,7 +7,7 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
-from agent_clicker.domain.task import AdProxyConfigDTO, TaskDTO
+from agent_clicker.domain.task import AdProxyConfigDTO, TaskDTO, TaskProxyConfigDTO
 
 T = TypeVar("T")
 
@@ -92,6 +92,32 @@ class AdProxyConfigOut(BaseModel):
 
 class AdProxyConfigUpsert(BaseModel):
     ad_id: int
+    proxy_host: str
+    proxy_port: int
+    proxy_login: str | None = None
+    proxy_password: str | None = None
+
+
+class TaskProxyConfigOut(BaseModel):
+    task_id: int
+    proxy_host: str
+    proxy_port: int
+    proxy_login: str | None = None
+    proxy_password: str | None = None
+
+    @classmethod
+    def from_dto(cls, dto: TaskProxyConfigDTO) -> TaskProxyConfigOut:
+        return cls(
+            task_id=dto.task_id,
+            proxy_host=dto.proxy_host,
+            proxy_port=dto.proxy_port,
+            proxy_login=dto.proxy_login,
+            proxy_password=dto.proxy_password,
+        )
+
+
+class TaskProxyConfigUpsert(BaseModel):
+    task_id: int
     proxy_host: str
     proxy_port: int
     proxy_login: str | None = None
