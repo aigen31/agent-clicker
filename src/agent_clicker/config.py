@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     internal_state_dsn: str = Field(
         default="postgresql+asyncpg://agent:agent@localhost:5432/agent_clicker",
     )
+    # Optional external DB for proxy configs (if user has permissions)
+    external_migrations_dsn: str | None = Field(
+        default=None,
+        description="Optional external DB for proxy configurations. If set, ad_proxy_configs and task_proxies tables will be created here.",
+    )
 
     # LLM
     llm_api_key: SecretStr = SecretStr("sk-changeme")

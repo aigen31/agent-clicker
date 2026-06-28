@@ -89,6 +89,7 @@ async def run() -> None:
     engines = build_engines(
         external_dsn=settings.external_tasks_dsn,
         internal_dsn=settings.internal_state_dsn,
+        external_migrations_dsn=settings.external_migrations_dsn,
     )
     settings_repo = SettingsRepository(engines.internal_session)
     settings_store = SettingsStore(settings_repo)
@@ -105,8 +106,10 @@ async def run() -> None:
         internal_session=engines.internal_session,
         default_max_attempts=worker_cfg.max_attempts,
     )
-    ad_proxy_repo = AdProxyRepository(engines.internal_session)
-    task_proxy_repo = TaskProxyRepository(engines.internal_session)
+    # Use external migrations database for proxy repos if available, otherwise fallback to internal
+    proxy_repo_session = engines.external_migrations_session or engines.internal_session
+    ad_proxy_repo = AdProxyRepository(proxy_repo_session)
+    task_proxy_repo = TaskProxyRepository(proxy_repo_session)
     artifact_store = ArtifactStore(Path(settings.artifacts_dir))
     proxy_pool = ProxyPool(settings)
     runner = AgentRunner(settings_store, artifact_store, settings)

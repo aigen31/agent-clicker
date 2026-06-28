@@ -413,13 +413,13 @@ class SettingsRepository:
 
 
 class AdProxyRepository:
-    """CRUD for per-ad_id proxy configurations (internal table)."""
+    """CRUD for per-ad_id proxy configurations (internal or external_migrations table)."""
 
-    def __init__(self, internal_session: async_sessionmaker[AsyncSession]) -> None:
-        self._intl = internal_session
+    def __init__(self, session: async_sessionmaker[AsyncSession]) -> None:
+        self._session = session
 
     async def get_by_ad_id(self, ad_id: int) -> AdProxyConfigDTO | None:
-        async with self._intl() as session:
+        async with self._session() as session:
             row = (
                 await session.execute(
                     select(AdProxyConfig).where(AdProxyConfig.ad_id == ad_id)
@@ -436,7 +436,7 @@ class AdProxyRepository:
             )
 
     async def list_all(self) -> list[AdProxyConfigDTO]:
-        async with self._intl() as session:
+        async with self._session() as session:
             rows = (
                 await session.execute(
                     select(AdProxyConfig).order_by(AdProxyConfig.ad_id.asc())
@@ -462,7 +462,7 @@ class AdProxyRepository:
         proxy_login: str | None = None,
         proxy_password: str | None = None,
     ) -> AdProxyConfigDTO:
-        async with self._intl() as session, session.begin():
+        async with self._session() as session, session.begin():
             stmt = pg_insert(AdProxyConfig).values(
                 ad_id=ad_id,
                 proxy_host=proxy_host,
@@ -486,7 +486,7 @@ class AdProxyRepository:
         return dto
 
     async def delete(self, ad_id: int) -> bool:
-        async with self._intl() as session, session.begin():
+        async with self._session() as session, session.begin():
             res = await session.execute(
                 delete(AdProxyConfig).where(AdProxyConfig.ad_id == ad_id)
             )
@@ -494,13 +494,13 @@ class AdProxyRepository:
 
 
 class TaskProxyRepository:
-    """CRUD for per-task_id proxy configurations (internal table)."""
+    """CRUD for per-task_id proxy configurations (internal or external_migrations table)."""
 
-    def __init__(self, internal_session: async_sessionmaker[AsyncSession]) -> None:
-        self._intl = internal_session
+    def __init__(self, session: async_sessionmaker[AsyncSession]) -> None:
+        self._session = session
 
     async def get_by_task_id(self, task_id: int) -> TaskProxyConfigDTO | None:
-        async with self._intl() as session:
+        async with self._session() as session:
             row = (
                 await session.execute(
                     select(TaskProxy).where(TaskProxy.task_id == task_id)
@@ -517,7 +517,7 @@ class TaskProxyRepository:
             )
 
     async def list_all(self) -> list[TaskProxyConfigDTO]:
-        async with self._intl() as session:
+        async with self._session() as session:
             rows = (
                 await session.execute(
                     select(TaskProxy).order_by(TaskProxy.task_id.desc())
@@ -543,7 +543,7 @@ class TaskProxyRepository:
         proxy_login: str | None = None,
         proxy_password: str | None = None,
     ) -> TaskProxyConfigDTO:
-        async with self._intl() as session, session.begin():
+        async with self._session() as session, session.begin():
             stmt = pg_insert(TaskProxy).values(
                 task_id=task_id,
                 proxy_host=proxy_host,
@@ -567,7 +567,7 @@ class TaskProxyRepository:
         return dto
 
     async def delete(self, task_id: int) -> bool:
-        async with self._intl() as session, session.begin():
+        async with self._session() as session, session.begin():
             res = await session.execute(
                 delete(TaskProxy).where(TaskProxy.task_id == task_id)
             )

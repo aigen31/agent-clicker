@@ -17,6 +17,8 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # --- task_proxies ---
+    # This table can be in external DB if user has appropriate permissions
     op.create_table(
         "task_proxies",
         sa.Column("task_id", sa.BigInteger(), primary_key=True),

@@ -18,6 +18,7 @@ depends_on = None
 
 def upgrade() -> None:
     # --- ad_proxy_configs ---
+    # This table can be in external DB if user has appropriate permissions
     op.create_table(
         "ad_proxy_configs",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),

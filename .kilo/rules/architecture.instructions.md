@@ -150,7 +150,7 @@ agent-clicker/
 ### 3.1 Static `Settings` (env-only)
 
 Поля (из env / `.env`), иммутабельны после старта:
-- **DB**: `database_url`
+- **DB**: `external_tasks_dsn`, `internal_state_dsn`, `external_migrations_dsn` (optional)
 - **LLM**: `llm_api_key` (SecretStr), `llm_base_url`
 - **Proxy**: `proxy_provider_url`, `proxy_provider_token` (SecretStr), `proxy_list` (CSV строка)
 - **Infra**: `artifacts_dir`, `log_level`, `log_buffer_size`
@@ -179,9 +179,11 @@ agent-clicker/
 
 **`TaskRuntime`** (таблица `task_runtime`, internal): служебные поля задачи — task_id (BigInteger PK), attempts, max_attempts, last_error, worker_id, locked_at, profile (JSONB, аудит-профиль браузера), result (JSONB, результат агента), cookies (JSONB), updated_at
 
-**`TaskProxy`** (таблица `task_proxies`, internal): прокси-конфигурация, привязанная к конкретному task_id — task_id (BigInteger PK), proxy_host, proxy_port, proxy_login, proxy_password, created_at, updated_at
+**`TaskProxy`** (таблица `task_proxies`): прокси-конфигурация, привязанная к конкретному task_id — task_id (BigInteger PK), proxy_host, proxy_port, proxy_login, proxy_password, created_at, updated_at.
+  *Эта таблица может быть в внешней БД с правами на создание таблицы, если пользователь имеет соответствующие разрешения.*
 
-**`AdProxyConfig`** (таблица `ad_proxy_configs`, internal): прокси-конфигурация, привязанная к ad_id — id (Integer PK), ad_id (unique), proxy_host, proxy_port, proxy_login, proxy_password, created_at, updated_at
+**`AdProxyConfig`** (таблица `ad_proxy_configs`): прокси-конфигурация, привязанная к ad_id — id (Integer PK), ad_id (unique), proxy_host, proxy_port, proxy_login, proxy_password, created_at, updated_at.
+  *Эта таблица может быть в внешней БД с правами на создание таблицы, если пользователь имеет соответствующие разрешения.*
 
 **`Setting`** (таблица `settings`): key (Text PK), value (JSONB), updated_at (TIMESTAMPTZ, auto-update)
 
